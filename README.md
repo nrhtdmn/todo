@@ -14,6 +14,12 @@ Offline-first, kurulabilir Progressive Web App. Projeler, etiketler, öncelikler
 - **Yedek**: JSON dışa / içe aktarma
 - **Kısayollar**: `N` veya `/` yeni görev, `1–4` görünümler, `Esc` kapat
 
+## Canlı
+
+https://nrhtdmn.github.io/todo/
+
+`main` branch’e her push’ta GitHub Actions ile otomatik deploy edilir.
+
 ## Geliştirme
 
 ```bash
