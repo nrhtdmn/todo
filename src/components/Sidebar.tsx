@@ -16,8 +16,8 @@ import { useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react
 import type { ViewId } from '../types'
 import { PROJECT_COLORS } from '../types'
 import { useTodo } from '../store/TodoContext'
-import { getViewTitle, isOverdue, toDateKey, todayKey } from '../utils/dates'
-import { isToday, parseISO } from 'date-fns'
+import { getViewTitle, taskCoversDateKey, toDateKey, todayKey } from '../utils/dates'
+import { addDays, parseISO, startOfDay } from 'date-fns'
 import { DayCalendar } from './DayCalendar'
 
 interface SidebarProps {
@@ -38,17 +38,17 @@ export function Sidebar({
 
   const counts = useMemo(() => {
     const active = tasks.filter((t) => !t.completed)
+    const tomorrow = startOfDay(addDays(new Date(), 1))
     return {
       inbox: active.filter((t) => !t.projectId).length,
-      today: active.filter(
-        (t) => t.dueDate && isToday(parseISO(t.dueDate)),
-      ).length,
-      upcoming: active.filter(
-        (t) =>
-          t.dueDate &&
-          !isToday(parseISO(t.dueDate)) &&
-          !isOverdue(t.dueDate, false),
-      ).length,
+      today: active.filter((t) => taskCoversDateKey(t, todayKey())).length,
+      upcoming: active.filter((t) => {
+        if (!t.dueDate) return false
+        const end = startOfDay(
+          addDays(parseISO(t.dueDate), Math.max(1, t.durationDays || 1) - 1),
+        )
+        return end >= tomorrow
+      }).length,
       completed: tasks.filter((t) => t.completed).length,
       total: tasks.length,
       done: tasks.filter((t) => t.completed).length,

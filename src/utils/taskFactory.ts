@@ -9,6 +9,12 @@ function now() {
   return new Date().toISOString()
 }
 
+export function normalizeDuration(value: unknown): number {
+  const n = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(n) || n < 1) return 1
+  return Math.min(365, Math.floor(n))
+}
+
 export function createProject(
   name: string,
   order: number,
@@ -33,6 +39,7 @@ export function createTask(partial: Partial<Task> & { title: string }): Task {
     completed: partial.completed ?? false,
     priority: partial.priority ?? 'medium',
     dueDate: partial.dueDate ?? null,
+    durationDays: normalizeDuration(partial.durationDays),
     projectId: partial.projectId ?? null,
     tags: partial.tags ?? [],
     subtasks: partial.subtasks ?? [],

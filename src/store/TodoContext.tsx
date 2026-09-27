@@ -15,6 +15,7 @@ import {
   createSubtask,
   createTask,
   exportData,
+  normalizeDuration,
   parseImport,
   seedIfEmpty,
 } from '../utils/taskFactory'
@@ -63,7 +64,12 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     seedIfEmpty().then(({ projects, tasks, settings }) => {
       setProjects(projects)
-      setTasks(tasks)
+      setTasks(
+        tasks.map((t) => ({
+          ...t,
+          durationDays: normalizeDuration(t.durationDays),
+        })),
+      )
       setSettings(settings)
       setReady(true)
     })
@@ -166,6 +172,9 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       const next = {
         ...current,
         ...patch,
+        ...(patch.durationDays !== undefined
+          ? { durationDays: normalizeDuration(patch.durationDays) }
+          : {}),
         updatedAt: new Date().toISOString(),
       }
       void db.saveTask(next)

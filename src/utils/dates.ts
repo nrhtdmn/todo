@@ -2,14 +2,20 @@ import {
   addDays,
   format,
   isBefore,
-  isSameDay,
   isToday,
   isTomorrow,
+  isWithinInterval,
   parseISO,
   startOfDay,
 } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import type { Task, ViewId } from '../types'
+
+export function getDuration(task: Pick<Task, 'durationDays'>): number {
+  const n = task.durationDays
+  if (!Number.isFinite(n) || n < 1) return 1
+  return Math.min(365, Math.floor(n))
+}
 
 export function formatDueDate(iso: string | null): string {
   if (!iso) return ''
@@ -19,13 +25,28 @@ export function formatDueDate(iso: string | null): string {
   return format(date, 'd MMM', { locale: tr })
 }
 
+export function formatTaskSchedule(task: Task): string {
+  if (!task.dueDate) return ''
+  const days = getDuration(task)
+  const start = formatDueDate(task.dueDate)
+  if (days <= 1) return start
+  const end = addDays(parseISO(task.dueDate), days - 1)
+  const endLabel = isToday(end)
+    ? 'Bugün'
+    : isTomorrow(end)
+      ? 'Yarın'
+      : format(end, 'd MMM', { locale: tr })
+  return `${start} → ${endLabel} · ${days} gün`
+}
+
 export function formatFullDate(iso: string): string {
   return format(parseISO(iso), 'd MMMM yyyy', { locale: tr })
 }
 
-export function isOverdue(iso: string | null, completed: boolean): boolean {
-  if (!iso || completed) return false
-  return isBefore(startOfDay(parseISO(iso)), startOfDay(new Date()))
+export function isOverdue(task: Task): boolean {
+  if (!task.dueDate || task.completed) return false
+  const end = startOfDay(addDays(parseISO(task.dueDate), getDuration(task) - 1))
+  return isBefore(end, startOfDay(new Date()))
 }
 
 export function toDateInputValue(iso: string | null): string {
@@ -60,6 +81,29 @@ export function formatDayTitle(dateKey: string): string {
   return format(date, 'd MMMM yyyy', { locale: tr })
 }
 
+/** Task covers this calendar day (inclusive start + duration). */
+export function taskCoversDateKey(task: Task, dateKey: string): boolean {
+  if (!task.dueDate) return false
+  const start = startOfDay(parseISO(task.dueDate))
+  const end = startOfDay(addDays(start, getDuration(task) - 1))
+  const day = startOfDay(parseISO(`${dateKey}T12:00:00`))
+  return isWithinInterval(day, { start, end })
+}
+
+export function taskCoversDate(task: Task, date: Date): boolean {
+  return taskCoversDateKey(task, format(date, 'yyyy-MM-dd'))
+}
+
+/** All day keys a task spans. */
+export function taskDayKeys(task: Task): string[] {
+  if (!task.dueDate) return []
+  const days = getDuration(task)
+  const start = parseISO(task.dueDate)
+  return Array.from({ length: days }, (_, i) =>
+    format(addDays(start, i), 'yyyy-MM-dd'),
+  )
+}
+
 export function filterTasksByView(
   tasks: Task[],
   view: ViewId,
@@ -72,27 +116,23 @@ export function filterTasksByView(
       filtered = tasks.filter((t) => !t.projectId && !t.completed)
       break
     case view === 'today':
-      // Only tasks due today — completed or not. No past/future.
-      filtered = tasks.filter(
-        (t) => t.dueDate && isToday(parseISO(t.dueDate)),
-      )
+      filtered = tasks.filter((t) => taskCoversDateKey(t, todayKey()))
       break
     case view.startsWith('day:'): {
       const key = view.slice('day:'.length)
-      filtered = tasks.filter(
-        (t) => t.dueDate && toDateKey(t.dueDate) === key,
-      )
+      filtered = tasks.filter((t) => taskCoversDateKey(t, key))
       break
     }
-    case view === 'upcoming':
-      filtered = tasks.filter(
-        (t) =>
-          !t.completed &&
-          t.dueDate &&
-          !isToday(parseISO(t.dueDate)) &&
-          !isOverdue(t.dueDate, false),
-      )
+    case view === 'upcoming': {
+      const tomorrow = startOfDay(addDays(new Date(), 1))
+      filtered = tasks.filter((t) => {
+        if (t.completed || !t.dueDate) return false
+        const start = startOfDay(parseISO(t.dueDate))
+        const end = startOfDay(addDays(start, getDuration(t) - 1))
+        return end >= tomorrow
+      })
       break
+    }
     case view === 'completed':
       filtered = tasks.filter((t) => t.completed)
       break
@@ -142,9 +182,7 @@ export function groupUpcoming(tasks: Task[]): { label: string; tasks: Task[] }[]
 
   for (let i = 1; i <= 7; i++) {
     const day = addDays(today, i)
-    const dayTasks = tasks.filter(
-      (t) => t.dueDate && isSameDay(parseISO(t.dueDate), day),
-    )
+    const dayTasks = tasks.filter((t) => taskCoversDate(t, day))
     if (dayTasks.length) {
       groups.push({
         label: i === 1 ? 'Yarın' : format(day, 'EEEE, d MMM', { locale: tr }),
@@ -153,9 +191,10 @@ export function groupUpcoming(tasks: Task[]): { label: string; tasks: Task[] }[]
     }
   }
 
+  const weekEnd = addDays(today, 7)
   const later = tasks.filter((t) => {
     if (!t.dueDate) return false
-    return startOfDay(parseISO(t.dueDate)) >= addDays(today, 8)
+    return startOfDay(parseISO(t.dueDate)) > weekEnd
   })
 
   if (later.length) {

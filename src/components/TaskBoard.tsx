@@ -28,7 +28,8 @@ import { PRIORITY_LABELS } from '../types'
 import { useTodo } from '../store/TodoContext'
 import {
   filterTasksByView,
-  formatDueDate,
+  formatTaskSchedule,
+  getDuration,
   getViewTitle,
   groupUpcoming,
   isOverdue,
@@ -37,20 +38,30 @@ import {
 export function QuickAdd() {
   const { addTask, view, setSelectedTaskId } = useTodo()
   const [value, setValue] = useState('')
+  const [duration, setDuration] = useState('')
+
+  const parsedDuration = () => {
+    if (duration.trim() === '') return 1
+    const n = Number(duration)
+    if (!Number.isFinite(n) || n < 1) return 1
+    return Math.min(365, Math.floor(n))
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const title = value.trim()
     if (!title) return
-    await addTask(title)
+    await addTask(title, { durationDays: parsedDuration() })
     setValue('')
+    setDuration('')
   }
 
   const saveAndClose = async () => {
     const title = value.trim()
     if (title) {
-      await addTask(title)
+      await addTask(title, { durationDays: parsedDuration() })
       setValue('')
+      setDuration('')
     }
     setSelectedTaskId(null)
   }
@@ -66,6 +77,18 @@ export function QuickAdd() {
         onChange={(e) => setValue(e.target.value)}
         placeholder="Yeni görev ekle…"
         autoComplete="off"
+      />
+      <input
+        className="quick-add-duration"
+        type="number"
+        min={1}
+        max={365}
+        inputMode="numeric"
+        value={duration}
+        onChange={(e) => setDuration(e.target.value)}
+        placeholder="Gün"
+        title="Kaç gün sürecek? Boş = 1 gün"
+        aria-label="Süre (gün)"
       />
       <div className="hint-keys">
         <kbd className="kbd">N</kbd>
@@ -101,7 +124,8 @@ function TaskRow({ task }: { task: Task }) {
   } = useSortable({ id: task.id })
 
   const project = projects.find((p) => p.id === task.projectId)
-  const overdue = isOverdue(task.dueDate, task.completed)
+  const overdue = isOverdue(task)
+  const duration = getDuration(task)
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -150,8 +174,11 @@ function TaskRow({ task }: { task: Task }) {
           {task.dueDate && (
             <span className={`chip ${overdue ? 'overdue' : ''}`}>
               <Calendar size={11} />
-              {formatDueDate(task.dueDate)}
+              {formatTaskSchedule(task)}
             </span>
+          )}
+          {duration > 1 && !task.dueDate && (
+            <span className="chip">{duration} gün</span>
           )}
           {project && (
             <span className="chip">

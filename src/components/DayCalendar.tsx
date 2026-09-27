@@ -16,7 +16,7 @@ import { tr } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTodo } from '../store/TodoContext'
-import { toDateKey } from '../utils/dates'
+import { taskDayKeys } from '../utils/dates'
 
 interface DayCalendarProps {
   open: boolean
@@ -47,12 +47,12 @@ export function DayCalendar({
   const taskDays = useMemo(() => {
     const map = new Map<string, { total: number; open: number }>()
     for (const t of tasks) {
-      if (!t.dueDate) continue
-      const key = toDateKey(t.dueDate)
-      const cur = map.get(key) ?? { total: 0, open: 0 }
-      cur.total += 1
-      if (!t.completed) cur.open += 1
-      map.set(key, cur)
+      for (const key of taskDayKeys(t)) {
+        const cur = map.get(key) ?? { total: 0, open: 0 }
+        cur.total += 1
+        if (!t.completed) cur.open += 1
+        map.set(key, cur)
+      }
     }
     return map
   }, [tasks])

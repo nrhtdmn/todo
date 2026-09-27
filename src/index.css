@@ -392,8 +392,52 @@ a {
   font-size: 1rem;
 }
 
+.quick-add-duration {
+  width: 4.2rem;
+  flex: 0 0 auto !important;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.quick-add-duration::-webkit-outer-spin-button,
+.quick-add-duration::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quick-add-duration[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .quick-add input::placeholder {
   color: var(--text-faint);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 0.75rem;
+}
+
+.field-hint {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  line-height: 1.35;
+}
+
+@media (max-width: 520px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-add-duration {
+    width: 3.6rem;
+  }
 }
 
 .hint-keys {

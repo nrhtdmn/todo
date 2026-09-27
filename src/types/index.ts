@@ -31,6 +31,8 @@ export interface Task {
   completed: boolean
   priority: Priority
   dueDate: string | null
+  /** Kaç gün süreceği. Boş/eksik = 1 gün. Başlangıç dueDate. */
+  durationDays: number
   projectId: string | null
   tags: string[]
   subtasks: Subtask[]

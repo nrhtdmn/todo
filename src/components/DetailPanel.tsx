@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import type { Priority } from '../types'
 import { PRIORITY_LABELS } from '../types'
 import { useTodo } from '../store/TodoContext'
-import { fromDateInputValue, toDateInputValue } from '../utils/dates'
+import { fromDateInputValue, getDuration, toDateInputValue } from '../utils/dates'
 
 export function DetailPanel() {
   const {
@@ -89,20 +89,51 @@ export function DetailPanel() {
           </div>
         </div>
 
-        <div className="field">
-          <label className="field-label" htmlFor="due">
-            Son tarih
-          </label>
-          <input
-            id="due"
-            type="date"
-            value={toDateInputValue(task.dueDate)}
-            onChange={(e) =>
-              void updateTask(task.id, {
-                dueDate: fromDateInputValue(e.target.value),
-              })
-            }
-          />
+        <div className="field-row">
+          <div className="field">
+            <label className="field-label" htmlFor="due">
+              Başlangıç
+            </label>
+            <input
+              id="due"
+              type="date"
+              value={toDateInputValue(task.dueDate)}
+              onChange={(e) =>
+                void updateTask(task.id, {
+                  dueDate: fromDateInputValue(e.target.value),
+                })
+              }
+            />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="duration">
+              Süre (gün)
+            </label>
+            <input
+              id="duration"
+              type="number"
+              min={1}
+              max={365}
+              inputMode="numeric"
+              placeholder="1"
+              value={getDuration(task)}
+              onChange={(e) => {
+                const raw = e.target.value
+                if (raw === '') {
+                  void updateTask(task.id, { durationDays: 1 })
+                  return
+                }
+                const n = Number(raw)
+                void updateTask(task.id, {
+                  durationDays:
+                    !Number.isFinite(n) || n < 1 ? 1 : Math.min(365, Math.floor(n)),
+                })
+              }}
+            />
+            <span className="field-hint">
+              Boş bırakılırsa 1 gün. 3 yazarsan görevin her güne eklenir.
+            </span>
+          </div>
         </div>
 
         <div className="field">
