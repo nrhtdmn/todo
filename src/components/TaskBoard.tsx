@@ -35,7 +35,7 @@ import {
 } from '../utils/dates'
 
 export function QuickAdd() {
-  const { addTask, view } = useTodo()
+  const { addTask, view, setSelectedTaskId } = useTodo()
   const [value, setValue] = useState('')
 
   const submit = async (e: FormEvent) => {
@@ -44,6 +44,15 @@ export function QuickAdd() {
     if (!title) return
     await addTask(title)
     setValue('')
+  }
+
+  const saveAndClose = async () => {
+    const title = value.trim()
+    if (title) {
+      await addTask(title)
+      setValue('')
+    }
+    setSelectedTaskId(null)
   }
 
   if (view === 'completed') return null
@@ -61,6 +70,13 @@ export function QuickAdd() {
       <div className="hint-keys">
         <kbd className="kbd">N</kbd>
       </div>
+      <button
+        type="button"
+        className="btn btn-ghost"
+        onClick={() => void saveAndClose()}
+      >
+        Kaydet
+      </button>
       <button type="submit" className="btn btn-primary" disabled={!value.trim()}>
         Ekle
       </button>

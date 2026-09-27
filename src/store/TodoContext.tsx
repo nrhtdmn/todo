@@ -18,7 +18,7 @@ import {
   parseImport,
   seedIfEmpty,
 } from '../utils/taskFactory'
-import { collectTags } from '../utils/dates'
+import { collectTags, fromDateInputValue, todayKey } from '../utils/dates'
 
 interface TodoContextValue {
   ready: boolean
@@ -131,11 +131,24 @@ export function TodoProvider({ children }: { children: ReactNode }) {
             : null
       const tagsFromView =
         view.startsWith('tag:') ? [view.slice('tag:'.length)] : []
+
+      let dueDate = extras?.dueDate
+      if (dueDate === undefined) {
+        if (view === 'today') {
+          dueDate = fromDateInputValue(todayKey())
+        } else if (view.startsWith('day:')) {
+          dueDate = fromDateInputValue(view.slice(4))
+        } else {
+          dueDate = null
+        }
+      }
+
       const task = createTask({
         title,
         projectId,
         tags: extras?.tags ?? tagsFromView,
         ...extras,
+        dueDate,
         order: Date.now(),
       })
       await db.saveTask(task)

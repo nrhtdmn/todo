@@ -16,8 +16,9 @@ import { useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react
 import type { ViewId } from '../types'
 import { PROJECT_COLORS } from '../types'
 import { useTodo } from '../store/TodoContext'
-import { isOverdue } from '../utils/dates'
+import { getViewTitle, isOverdue, toDateKey, todayKey } from '../utils/dates'
 import { isToday, parseISO } from 'date-fns'
+import { DayCalendar } from './DayCalendar'
 
 interface SidebarProps {
   open: boolean
@@ -40,9 +41,7 @@ export function Sidebar({
     return {
       inbox: active.filter((t) => !t.projectId).length,
       today: active.filter(
-        (t) =>
-          t.dueDate &&
-          (isToday(parseISO(t.dueDate)) || isOverdue(t.dueDate, false)),
+        (t) => t.dueDate && isToday(parseISO(t.dueDate)),
       ).length,
       upcoming: active.filter(
         (t) =>
@@ -428,17 +427,26 @@ export function SettingsModal({
 }
 
 export function TopBar({ onMenu }: { onMenu: () => void }) {
-  const { view, projects, tasks, setSearchOpen } = useTodo()
+  const { view, projects, tasks, setSearchOpen, setView } = useTodo()
+  const [calendarOpen, setCalendarOpen] = useState(false)
+
   const project =
     view.startsWith('project:')
       ? projects.find((p) => p.id === view.slice(8))
       : undefined
 
+  const dayKey =
+    view === 'today'
+      ? todayKey()
+      : view.startsWith('day:')
+        ? view.slice(4)
+        : null
+
   const title =
     view === 'inbox'
       ? 'Gelen Kutusu'
-      : view === 'today'
-        ? 'Bugün'
+      : view === 'today' || view.startsWith('day:')
+        ? getViewTitle(view)
         : view === 'upcoming'
           ? 'Yaklaşan'
           : view === 'completed'
@@ -447,31 +455,67 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
               ? `#${view.slice(4)}`
               : (project?.name ?? 'Görevler')
 
-  const openCount = tasks.filter((t) => !t.completed).length
+  const dayTasks =
+    dayKey != null
+      ? tasks.filter((t) => t.dueDate && toDateKey(t.dueDate) === dayKey)
+      : null
+  const openCount =
+    dayTasks != null
+      ? dayTasks.filter((t) => !t.completed).length
+      : tasks.filter((t) => !t.completed).length
+
+  const showCalendar = view === 'today' || view.startsWith('day:')
+
+  const selectDay = (key: string) => {
+    if (key === todayKey()) setView('today')
+    else setView(`day:${key}`)
+  }
 
   return (
-    <header className="main-header">
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="icon-btn mobile-menu" onClick={onMenu} aria-label="Menü">
-            <Menu size={20} />
-          </button>
-          <h1 className="main-title">{title}</h1>
+    <>
+      <header className="main-header">
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="icon-btn mobile-menu" onClick={onMenu} aria-label="Menü">
+              <Menu size={20} />
+            </button>
+            <h1 className="main-title">{title}</h1>
+            {showCalendar && (
+              <button
+                type="button"
+                className="icon-btn calendar-trigger"
+                onClick={() => setCalendarOpen(true)}
+                aria-label="Takvimi aç"
+                title="Takvim"
+              >
+                <CalendarDays size={22} />
+              </button>
+            )}
+          </div>
+          <p className="main-subtitle">
+            {dayTasks != null
+              ? `${dayTasks.length} görev · ${openCount} açık · Ctrl+K ile ara`
+              : `${openCount} açık görev · Ctrl+K ile ara`}
+          </p>
         </div>
-        <p className="main-subtitle">
-          {openCount} açık görev · Ctrl+K ile ara
-        </p>
-      </div>
-      <div className="header-actions">
-        <button
-          className="btn btn-ghost"
-          onClick={() => setSearchOpen(true)}
-          title="Ara (Ctrl+K)"
-        >
-          <Search size={16} />
-          Ara
-        </button>
-      </div>
-    </header>
+        <div className="header-actions">
+          <button
+            className="btn btn-ghost"
+            onClick={() => setSearchOpen(true)}
+            title="Ara (Ctrl+K)"
+          >
+            <Search size={16} />
+            Ara
+          </button>
+        </div>
+      </header>
+
+      <DayCalendar
+        open={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        selectedKey={dayKey}
+        onSelect={selectDay}
+      />
+    </>
   )
 }

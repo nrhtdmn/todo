@@ -7,6 +7,7 @@ export type ViewId =
   | 'completed'
   | `project:${string}`
   | `tag:${string}`
+  | `day:${string}`
 
 export interface Subtask {
   id: string
