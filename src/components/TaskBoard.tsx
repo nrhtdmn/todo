@@ -36,34 +36,15 @@ import {
 } from '../utils/dates'
 
 export function QuickAdd() {
-  const { addTask, view, setSelectedTaskId } = useTodo()
+  const { addTask, view } = useTodo()
   const [value, setValue] = useState('')
-  const [duration, setDuration] = useState('')
-
-  const parsedDuration = () => {
-    if (duration.trim() === '') return 1
-    const n = Number(duration)
-    if (!Number.isFinite(n) || n < 1) return 1
-    return Math.min(365, Math.floor(n))
-  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const title = value.trim()
     if (!title) return
-    await addTask(title, { durationDays: parsedDuration() })
+    await addTask(title)
     setValue('')
-    setDuration('')
-  }
-
-  const saveAndClose = async () => {
-    const title = value.trim()
-    if (title) {
-      await addTask(title, { durationDays: parsedDuration() })
-      setValue('')
-      setDuration('')
-    }
-    setSelectedTaskId(null)
   }
 
   if (view === 'completed') return null
@@ -78,28 +59,9 @@ export function QuickAdd() {
         placeholder="Yeni görev ekle…"
         autoComplete="off"
       />
-      <input
-        className="quick-add-duration"
-        type="number"
-        min={1}
-        max={365}
-        inputMode="numeric"
-        value={duration}
-        onChange={(e) => setDuration(e.target.value)}
-        placeholder="Gün"
-        title="Kaç gün sürecek? Boş = 1 gün"
-        aria-label="Süre (gün)"
-      />
       <div className="hint-keys">
         <kbd className="kbd">N</kbd>
       </div>
-      <button
-        type="button"
-        className="btn btn-ghost"
-        onClick={() => void saveAndClose()}
-      >
-        Kaydet
-      </button>
       <button type="submit" className="btn btn-primary" disabled={!value.trim()}>
         Ekle
       </button>
