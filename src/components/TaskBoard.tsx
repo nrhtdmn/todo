@@ -6,6 +6,7 @@ import {
   GripVertical,
   Hash,
   ListTodo,
+  Search,
 } from 'lucide-react'
 import {
   DndContext,
@@ -36,7 +37,7 @@ import {
 } from '../utils/dates'
 
 export function QuickAdd() {
-  const { addTask, view } = useTodo()
+  const { addTask, view, setSearchOpen } = useTodo()
   const [value, setValue] = useState('')
 
   const submit = async (e: FormEvent) => {
@@ -47,25 +48,36 @@ export function QuickAdd() {
     setValue('')
   }
 
-  if (view === 'completed') return null
-
   return (
-    <form className="quick-add" onSubmit={submit}>
-      <ListTodo size={18} color="var(--accent)" />
-      <input
-        id="quick-add-input"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Yeni görev ekle…"
-        autoComplete="off"
-      />
-      <div className="hint-keys">
-        <kbd className="kbd">N</kbd>
-      </div>
-      <button type="submit" className="btn btn-primary" disabled={!value.trim()}>
-        Ekle
+    <div className="compose">
+      <button
+        type="button"
+        className="btn btn-ghost search-above-add"
+        onClick={() => setSearchOpen(true)}
+        title="Ara (Ctrl+K)"
+      >
+        <Search size={16} />
+        Ara
       </button>
-    </form>
+      {view !== 'completed' && (
+        <form className="quick-add" onSubmit={submit}>
+          <ListTodo size={18} color="var(--accent)" />
+          <input
+            id="quick-add-input"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Yeni görev ekle…"
+            autoComplete="off"
+          />
+          <div className="hint-keys">
+            <kbd className="kbd">N</kbd>
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={!value.trim()}>
+            Ekle
+          </button>
+        </form>
+      )}
+    </div>
   )
 }
 

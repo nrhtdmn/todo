@@ -8,7 +8,6 @@ import {
   Menu,
   Moon,
   Plus,
-  Search,
   Settings2,
   Sun,
   Upload,
@@ -429,7 +428,7 @@ export function SettingsModal({
 }
 
 export function TopBar({ onMenu }: { onMenu: () => void }) {
-  const { view, projects, tasks, setSearchOpen, setView } = useTodo()
+  const { view, projects, tasks, setView } = useTodo()
   const [calendarOpen, setCalendarOpen] = useState(false)
 
   const project =
@@ -485,62 +484,50 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   return (
     <>
       <header className="main-header">
-        <div>
-          <div className="title-row">
-            <button className="icon-btn mobile-menu" onClick={onMenu} aria-label="Menü">
-              <Menu size={20} />
+        <div className="title-row">
+          <button className="icon-btn mobile-menu" onClick={onMenu} aria-label="Menü">
+            <Menu size={20} />
+          </button>
+          {showCalendar && (
+            <button
+              type="button"
+              className="icon-btn day-nav"
+              onClick={() => shiftDay(-1)}
+              aria-label="Önceki gün"
+              title="Önceki gün"
+            >
+              <ChevronLeft size={22} />
             </button>
-            {showCalendar && (
+          )}
+          <h1 className="main-title">{title}</h1>
+          {showCalendar && (
+            <>
               <button
                 type="button"
                 className="icon-btn day-nav"
-                onClick={() => shiftDay(-1)}
-                aria-label="Önceki gün"
-                title="Önceki gün"
+                onClick={() => shiftDay(1)}
+                aria-label="Sonraki gün"
+                title="Sonraki gün"
               >
-                <ChevronLeft size={22} />
+                <ChevronRight size={22} />
               </button>
-            )}
-            <h1 className="main-title">{title}</h1>
-            {showCalendar && (
-              <>
-                <button
-                  type="button"
-                  className="icon-btn day-nav"
-                  onClick={() => shiftDay(1)}
-                  aria-label="Sonraki gün"
-                  title="Sonraki gün"
-                >
-                  <ChevronRight size={22} />
-                </button>
-                <button
-                  type="button"
-                  className="icon-btn calendar-trigger"
-                  onClick={() => setCalendarOpen(true)}
-                  aria-label="Takvimi aç"
-                  title="Takvim"
-                >
-                  <CalendarDays size={22} />
-                </button>
-              </>
-            )}
-          </div>
-          <p className="main-subtitle">
-            {dayTasks != null
-              ? `${dayTasks.length} görev · ${openCount} açık · Ctrl+K ile ara`
-              : `${openCount} açık görev · Ctrl+K ile ara`}
-          </p>
+              <button
+                type="button"
+                className="icon-btn calendar-trigger"
+                onClick={() => setCalendarOpen(true)}
+                aria-label="Takvimi aç"
+                title="Takvim"
+              >
+                <CalendarDays size={22} />
+              </button>
+            </>
+          )}
         </div>
-        <div className="header-actions">
-          <button
-            className="btn btn-ghost"
-            onClick={() => setSearchOpen(true)}
-            title="Ara (Ctrl+K)"
-          >
-            <Search size={16} />
-            Ara
-          </button>
-        </div>
+        <p className="main-subtitle">
+          {dayTasks != null
+            ? `${dayTasks.length} görev · ${openCount} açık`
+            : `${openCount} açık görev`}
+        </p>
       </header>
 
       <DayCalendar

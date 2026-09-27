@@ -329,56 +329,73 @@ a {
 
 .main-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
   padding: 1.35rem 1.5rem 0.75rem;
 }
 
 .main-title {
   font-family: var(--display);
-  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   margin: 0;
   line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .title-row {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
+  gap: 0.2rem;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .day-nav {
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .day-nav:hover {
   color: var(--accent);
 }
 
+.calendar-trigger {
+  flex-shrink: 0;
+}
+
 .main-subtitle {
-  margin: 0.35rem 0 0;
+  margin: 0;
   color: var(--text-muted);
   font-size: 0.9rem;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
 .mobile-menu {
   display: none;
+  flex-shrink: 0;
 }
 
 .content {
   flex: 1;
   overflow: auto;
   padding: 0.5rem 1.5rem 2rem;
+}
+
+.compose {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.search-above-add {
+  align-self: flex-start;
 }
 
 .quick-add {
