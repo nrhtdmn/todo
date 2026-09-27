@@ -344,6 +344,21 @@ a {
   line-height: 1.1;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.day-nav {
+  color: var(--text-muted);
+}
+
+.day-nav:hover {
+  color: var(--accent);
+}
+
 .main-subtitle {
   margin: 0.35rem 0 0;
   color: var(--text-muted);

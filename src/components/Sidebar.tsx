@@ -1,6 +1,8 @@
 import {
   CalendarDays,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Download,
   Inbox,
   Menu,
@@ -16,8 +18,8 @@ import { useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react
 import type { ViewId } from '../types'
 import { PROJECT_COLORS } from '../types'
 import { useTodo } from '../store/TodoContext'
-import { getViewTitle, taskCoversDateKey, toDateKey, todayKey } from '../utils/dates'
-import { addDays, parseISO, startOfDay } from 'date-fns'
+import { getViewTitle, taskCoversDateKey, todayKey } from '../utils/dates'
+import { addDays, format, parseISO, startOfDay } from 'date-fns'
 import { DayCalendar } from './DayCalendar'
 
 interface SidebarProps {
@@ -457,7 +459,7 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
 
   const dayTasks =
     dayKey != null
-      ? tasks.filter((t) => t.dueDate && toDateKey(t.dueDate) === dayKey)
+      ? tasks.filter((t) => taskCoversDateKey(t, dayKey))
       : null
   const openCount =
     dayTasks != null
@@ -471,25 +473,56 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
     else setView(`day:${key}`)
   }
 
+  const shiftDay = (delta: number) => {
+    if (!dayKey) return
+    const next = format(
+      addDays(parseISO(`${dayKey}T12:00:00`), delta),
+      'yyyy-MM-dd',
+    )
+    selectDay(next)
+  }
+
   return (
     <>
       <header className="main-header">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="title-row">
             <button className="icon-btn mobile-menu" onClick={onMenu} aria-label="Menü">
               <Menu size={20} />
             </button>
-            <h1 className="main-title">{title}</h1>
             {showCalendar && (
               <button
                 type="button"
-                className="icon-btn calendar-trigger"
-                onClick={() => setCalendarOpen(true)}
-                aria-label="Takvimi aç"
-                title="Takvim"
+                className="icon-btn day-nav"
+                onClick={() => shiftDay(-1)}
+                aria-label="Önceki gün"
+                title="Önceki gün"
               >
-                <CalendarDays size={22} />
+                <ChevronLeft size={22} />
               </button>
+            )}
+            <h1 className="main-title">{title}</h1>
+            {showCalendar && (
+              <>
+                <button
+                  type="button"
+                  className="icon-btn day-nav"
+                  onClick={() => shiftDay(1)}
+                  aria-label="Sonraki gün"
+                  title="Sonraki gün"
+                >
+                  <ChevronRight size={22} />
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn calendar-trigger"
+                  onClick={() => setCalendarOpen(true)}
+                  aria-label="Takvimi aç"
+                  title="Takvim"
+                >
+                  <CalendarDays size={22} />
+                </button>
+              </>
             )}
           </div>
           <p className="main-subtitle">
