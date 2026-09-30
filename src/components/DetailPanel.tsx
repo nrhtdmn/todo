@@ -21,10 +21,19 @@ export function DetailPanel() {
   const task = tasks.find((t) => t.id === selectedTaskId)
   const [tagInput, setTagInput] = useState('')
   const [subInput, setSubInput] = useState('')
+  const [titleDraft, setTitleDraft] = useState('')
+  const [durationDraft, setDurationDraft] = useState('1')
 
   useEffect(() => {
     setTagInput('')
     setSubInput('')
+    const current = tasks.find((t) => t.id === selectedTaskId)
+    if (current) {
+      setTitleDraft(current.title)
+      setDurationDraft(String(getDuration(current)))
+    }
+    // Only when switching the open task — not on every tasks update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTaskId])
 
   if (!task) return null
@@ -36,7 +45,37 @@ export function DetailPanel() {
     setTagInput('')
   }
 
-  const saveAndClose = () => setSelectedTaskId(null)
+  const commitTitle = () => {
+    const next = titleDraft.trim() || task.title
+    if (next !== task.title) {
+      void updateTask(task.id, { title: next })
+      setTitleDraft(next)
+    } else if (!titleDraft.trim()) {
+      setTitleDraft(task.title)
+    }
+  }
+
+  const commitDuration = () => {
+    const raw = durationDraft.trim()
+    if (raw === '') {
+      setDurationDraft('1')
+      if (getDuration(task) !== 1) void updateTask(task.id, { durationDays: 1 })
+      return
+    }
+    const n = Number(raw)
+    const days =
+      !Number.isFinite(n) || n < 1 ? 1 : Math.min(365, Math.floor(n))
+    setDurationDraft(String(days))
+    if (getDuration(task) !== days) {
+      void updateTask(task.id, { durationDays: days })
+    }
+  }
+
+  const saveAndClose = () => {
+    commitTitle()
+    commitDuration()
+    setSelectedTaskId(null)
+  }
 
   return (
     <aside className="detail-panel">
@@ -65,12 +104,20 @@ export function DetailPanel() {
       </div>
 
       <div className="detail-body">
-        <textarea
-          className="detail-title"
-          rows={2}
-          value={task.title}
-          onChange={(e) => void updateTask(task.id, { title: e.target.value })}
-        />
+        <div className="field">
+          <label className="field-label" htmlFor="task-title">
+            Başlık
+          </label>
+          <textarea
+            id="task-title"
+            className="detail-title"
+            rows={2}
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={commitTitle}
+            placeholder="Görev başlığı…"
+          />
+        </div>
 
         <div className="field">
           <span className="field-label">Öncelik</span>
@@ -111,27 +158,26 @@ export function DetailPanel() {
             </label>
             <input
               id="duration"
-              type="number"
-              min={1}
-              max={365}
+              type="text"
               inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="1"
-              value={getDuration(task)}
+              value={durationDraft}
               onChange={(e) => {
-                const raw = e.target.value
-                if (raw === '') {
-                  void updateTask(task.id, { durationDays: 1 })
-                  return
+                const raw = e.target.value.replace(/[^\d]/g, '')
+                setDurationDraft(raw)
+              }}
+              onBlur={commitDuration}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  commitDuration()
+                  ;(e.target as HTMLInputElement).blur()
                 }
-                const n = Number(raw)
-                void updateTask(task.id, {
-                  durationDays:
-                    !Number.isFinite(n) || n < 1 ? 1 : Math.min(365, Math.floor(n)),
-                })
               }}
             />
             <span className="field-hint">
-              Boş bırakılırsa 1 gün. 3 yazarsan görevin her güne eklenir.
+              Silip yeni sayı yazabilirsin. Boş bırakılırsa 1 gün.
             </span>
           </div>
         </div>
